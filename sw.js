@@ -1,5 +1,5 @@
 const CACHE_PREFIX='biuum-shell:'+self.registration.scope+':';
-const VERSION=CACHE_PREFIX+'v3';
+const VERSION=CACHE_PREFIX+'v4-orange';
 const ASSETS=['./','./index.html','./styles.css','./connection.css','./theme.css','./app.js','./react-bundle.js','./model.js','./cache.js','./store.js','./google-store.js','./connection.js','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./icon-maskable-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll(ASSETS))));
 // No forced skipWaiting: avoid replacing running save code mid-session.
