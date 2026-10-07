@@ -1,0 +1,2 @@
+{"id":"./","name":"비움 · 중고물품 보관함","short_name":"비움","lang":"ko","start_url":"./","scope":"./","display":"standalone","background_color":"#ffffff","theme_color":"#ff6f0f","description":"중고물품과 사진을 내 Google 저장소에 보관합니다.","icons":[{"src":"./icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},{"src":"./icon-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}
+

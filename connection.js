@@ -1,0 +1,41 @@
+import {store} from './store.js';
+const $=id=>document.getElementById(id),dialog=$('settings-dialog'),form=$('settings-form');
+let installing;
+const messages={locked:['Google 연결 전','Google 연결 후 목록을 불러옵니다.'],google:['Google에 연결됨','목록은 Sheets에, 사진은 비공개 Drive에 저장됩니다.'],offline:['저장된 목록 보기 · 조회 전용','이 기기의 목록과 이전에 읽은 사진만 표시됩니다. 수정하려면 Google에 연결하세요.'],demo:['체험 모드 · 기기에만 저장','예시 데이터입니다. Google의 물품 목록에는 영향을 주지 않습니다.']};
+function update() {
+  const s=store.status,[title,description]=messages[s.mode];
+  $('connection-title').textContent=s.mode==='google'&&!s.connected?'Google 재연결 필요':title;
+  $('connection-description').textContent=(s.account?s.account+' · ':'')+(!navigator.onLine && s.mode==='google'?'인터넷 연결이 끊겼습니다. 저장된 목록 보기로 전환할 수 있습니다.':description);
+  $('connection-dot').classList.toggle('connected',s.connected);
+  $('connect').textContent=s.connected?'Google 다시 연결':'Google 연결';
+  $('connect').disabled=s.busy||!navigator.onLine;$('settings-open').disabled=s.busy;
+  form.querySelectorAll('button,input').forEach(element=>element.disabled=s.busy);
+}
+function message(error,target='connection-message') {const element=$(target);element.textContent=error instanceof Error?error.message:String(error);element.hidden=false;}
+function populate(value=store.status.config) { for(const key of ['clientId','ownerEmail','sheetId','folderId','tabName']) form.elements.namedItem(key).value=value[key] || (key==='tabName'?'물품':''); }
+async function action(fn,close=false) {
+  $('settings-error').hidden=true;$('connection-message').hidden=true;
+  try {await fn();if(close)dialog.close();}catch(error){message(error,dialog.open?'settings-error':'connection-message');}finally{update();}
+}
+$('settings-open').addEventListener('click',()=>{populate();$('settings-error').hidden=true;dialog.showModal();});
+$('settings-close').addEventListener('click',()=>dialog.close());
+form.addEventListener('submit',event=>{event.preventDefault();action(()=>store.saveConfig(Object.fromEntries(new FormData(form))),true);});
+$('connect').addEventListener('click',async()=>{
+  if(!store.status.config.clientId) {populate();dialog.showModal();message('먼저 연결 설정을 저장해 주세요.','settings-error');return;}
+  $('connect').disabled=true;
+  await action(()=>store.connect());
+});
+$('config-file').addEventListener('change',async event=>{
+  const file=event.target.files[0]; if(!file)return;
+  try {if(file.size>20000)throw new Error('설정 파일이 너무 큽니다.');const value=JSON.parse(await file.text());populate({...store.status.config,...value});}catch{message('설정 JSON 파일을 확인해 주세요.','settings-error');}finally{event.target.value='';}
+});
+$('demo').addEventListener('click',()=>action(()=>store.useDemo(),true));
+$('offline').addEventListener('click',()=>action(()=>store.useOffline(),true));
+$('disconnect').addEventListener('click',()=>action(()=>store.disconnect(),true));
+$('clear-cache').addEventListener('click',()=>action(()=>store.clearCache(),true));
+window.addEventListener('biuum-status',update);
+window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installing=event;$('install').hidden=false;});
+$('install').addEventListener('click',async()=>{if(!installing)return;await installing.prompt();installing=null;$('install').hidden=true;});
+window.addEventListener('appinstalled',()=>{$('install').hidden=true;});
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>message('기기에서 앱 캐시를 등록하지 못했습니다. 온라인 기능은 계속 사용할 수 있습니다.'));
+update();
