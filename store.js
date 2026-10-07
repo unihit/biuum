@@ -1,6 +1,7 @@
 import {GoogleStore} from './google-store.js';
 import {cache} from './cache.js';
 import {newItem,patchItem,photoBlob,ApiError} from './model.js';
+import {googleErrorMessage} from './google-errors.js';
 const CONFIG_KEY='biuum-connection-v1';
 let config;
 try { config=JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}'); } catch { config={}; }
@@ -23,9 +24,8 @@ async function request(url,options={},type='json') {
   if(generation!==session) throw new Error('Google 연결이 변경됐습니다.');
   if(response.status===401) { token=''; expiresAt=0; notify(); throw new ApiError('Google 연결이 만료됐습니다. 다시 연결해 주세요.',401); }
   if(!response.ok) {
-    // Never print API payloads or headers containing credentials.
-    const messages={403:'Google 권한이 부족하거나 API가 활성화되지 않았습니다.',404:'설정한 파일을 찾을 수 없거나 접근 권한이 없습니다.',429:'요청이 많습니다. 잠시 후 다시 시도해 주세요.'};
-    throw new ApiError(messages[response.status] || `Google 요청이 실패했습니다 (${response.status}).`,response.status);
+    const payload=await response.json().catch(()=>({}));
+    throw new ApiError(googleErrorMessage(response.status,url,payload),response.status);
   }
   if(type==='blob') return response.blob();
   if(response.status===204) return {};
