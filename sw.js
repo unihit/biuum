@@ -1,8 +1,9 @@
-const VERSION='biuum-shell-v2';
+const CACHE_PREFIX='biuum-shell:'+self.registration.scope+':';
+const VERSION=CACHE_PREFIX+'v3';
 const ASSETS=['./','./index.html','./styles.css','./connection.css','./theme.css','./app.js','./react-bundle.js','./model.js','./cache.js','./store.js','./google-store.js','./connection.js','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./icon-maskable-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll(ASSETS))));
 // No forced skipWaiting: avoid replacing running save code mid-session.
-self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('biuum-shell-')&&key!==VERSION).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
+self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith(CACHE_PREFIX)&&key!==VERSION).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
   const url=new URL(event.request.url),scope=new URL(self.registration.scope);
   // Google API responses, OAuth, user photos, config files and credentials NEVER enter this cache.
