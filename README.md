@@ -33,7 +33,7 @@ npm run preview
 1. Google Drive API, Google Sheets API를 활성화합니다.
 2. OAuth 클라이언트 유형은 **웹 애플리케이션**이어야 합니다.
 3. 승인된 JavaScript 원본에 로컬 확인용 `http://localhost`와 `http://localhost:4173`을 추가합니다. `http://127.0.0.1:4173`을 사용한다면 해당 원본도 별도로 필요합니다.
-4. GitHub 배포 후 `https://GITHUB_USERNAME.github.io`를 원본에 추가합니다. `/biuum-pwa/` 같은 저장소 경로는 넣지 않습니다. 사용자 도메인을 쓰면 그 HTTPS 원본을 추가합니다.
+4. GitHub 배포 후 `https://GITHUB_USERNAME.github.io`를 원본에 추가합니다. `/biuum/` 같은 저장소 경로는 넣지 않습니다. 사용자 도메인을 쓰면 그 HTTPS 원본을 추가합니다.
 5. OAuth 대상이 외부·테스트 상태라면 **본인 계정을 테스트 사용자에 추가**합니다. 테스트 사용자 설정은 영구적인 서버 접근 제어를 의미하지 않습니다.
 6. 데이터 액세스 범위에 `https://www.googleapis.com/auth/drive`와 `https://www.googleapis.com/auth/userinfo.email`을 구성합니다.
 
@@ -65,7 +65,7 @@ id | name | price | status | place | description | photoIds | createdAt | update
 
 ## GitHub Pages 배포
 
-1. GitHub 저장소를 만들고 **이 `biuum-pwa` 폴더 안의 파일**을 저장소 루트에 넣습니다. 숨김 폴더 `.github`도 포함하세요.
+1. 저장소는 `https://github.com/unihit/biuum`, 앱 주소는 `https://unihit.github.io/biuum/`입니다. 로컬 앱 폴더 안의 소스 파일을 저장소 루트에 넣습니다.
 2. 개인 연결 파일 `biuum-connection.local.json`은 저장소에 올리지 않습니다. 이 파일은 앱 폴더 밖에 있으며 `*.local.json`은 gitignore에도 등록되어 있습니다.
 3. 저장소 Settings → Pages → Source를 **Deploy from a branch**, 브랜치를 **gh-pages**, 폴더를 **/(root)**로 설정합니다.
 4. 앱의 정적 파일을 `gh-pages` 브랜치에 올리면 GitHub가 자동으로 배포합니다. 현재 제공된 원격 저장소는 이 방식으로 준비합니다.
@@ -102,3 +102,4 @@ Sheets 직접 호출에는 현재 Apps Script의 `LockService`와 같은 원자�
 - `tests/store.test.js`: 실패 후 재시도·사진 정리·기존 행 호환·충돌 검사 등의 모의 API 테스트.
 
 Google OAuth·실제 Drive 읽기/쓰기와 GitHub 배포는 사용자의 로그인·권한 동의 및 원본/API 설정 완료 후 별도로 확인해야 합니다. 모의 API 테스트 통과만으로 실제 연결이 검증됐다는 뜻은 아닙니다.
+
