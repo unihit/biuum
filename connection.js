@@ -1,5 +1,6 @@
 import {store} from './store.js';
 import {decodeSetup,setupUrl,validateSettings} from './setup-link.js';
+import qrcode from './qr-generator.js';
 const $=id=>document.getElementById(id),dialog=$('settings-dialog'),form=$('settings-form');
 let installing;
 const messages={locked:['Google 연결 전','Google 연결 후 목록을 불러옵니다.'],google:['Google에 연결됨','목록은 Sheets에, 사진은 비공개 Drive에 저장됩니다.'],offline:['저장된 목록 보기 · 조회 전용','이 기기의 목록과 이전에 읽은 사진만 표시됩니다. 수정하려면 Google에 연결하세요.'],demo:['체험 모드 · 기기에만 저장','예시 데이터입니다. Google의 물품 목록에는 영향을 주지 않습니다.']};
@@ -10,6 +11,7 @@ function update() {
   $('connection-dot').classList.toggle('connected',s.connected);
   $('connect').textContent=s.connected?'Google 다시 연결':'Google 연결';
   $('connect').disabled=s.busy||!navigator.onLine;$('settings-open').disabled=s.busy;
+  $('show-qr').disabled=s.busy;
   form.querySelectorAll('button,input').forEach(element=>element.disabled=s.busy);
 }
 function message(error,target='connection-message') {const element=$(target);element.textContent=error instanceof Error?error.message:String(error);element.hidden=false;}
@@ -20,6 +22,22 @@ async function action(fn,close=false) {
 }
 $('settings-open').addEventListener('click',()=>{populate();$('settings-error').hidden=true;dialog.showModal();});
 $('settings-close').addEventListener('click',()=>dialog.close());
+function showQr(settings) {
+  const link=setupUrl(settings,location.href);
+  const qr=qrcode(0,'M');qr.addData(link,'Byte');qr.make();
+  const count=qr.getModuleCount(),cell=6,border=4;
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=(count+border*2)*cell;
+  const context=canvas.getContext('2d');if(!context)throw new Error('QR 이미지를 만들지 못했습니다. 연결 링크 복사를 사용해 주세요.');
+  context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.fillStyle='#000';
+  for(let row=0;row<count;row++)for(let column=0;column<count;column++)if(qr.isDark(row,column))context.fillRect((column+border)*cell,(row+border)*cell,cell,cell);
+  const image=canvas.toDataURL('image/png');$('connection-qr').src=image;$('qr-download').href=image;$('qr-dialog').showModal();
+}
+$('show-qr').addEventListener('click',()=>{
+  try{showQr(store.status.config);}catch(error){populate();if(!dialog.open)dialog.showModal();message('먼저 연결 설정을 저장하거나 개인 설정 링크·QR로 불러와 주세요.','settings-error');}
+});
+$('settings-show-qr').addEventListener('click',()=>{try{showQr(Object.fromEntries(new FormData(form)));}catch(error){message(error,'settings-error');}});
+$('qr-close').addEventListener('click',()=>$('qr-dialog').close());
+$('qr-dialog').addEventListener('close',()=>{$('connection-qr').removeAttribute('src');$('qr-download').removeAttribute('href');});
 form.addEventListener('submit',event=>{event.preventDefault();action(()=>store.saveConfig(Object.fromEntries(new FormData(form))),true);});
 $('connect').addEventListener('click',async()=>{
   if(!store.status.config.clientId) {populate();dialog.showModal();message('먼저 연결 설정을 저장해 주세요.','settings-error');return;}
