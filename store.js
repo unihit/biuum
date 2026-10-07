@@ -2,6 +2,7 @@ import {GoogleStore} from './google-store.js';
 import {cache} from './cache.js';
 import {newItem,patchItem,photoBlob,ApiError} from './model.js';
 import {googleErrorMessage} from './google-errors.js';
+import {validateSettings as validateConfig} from './setup-link.js';
 const CONFIG_KEY='biuum-connection-v1';
 let config;
 try { config=JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}'); } catch { config={}; }
@@ -30,14 +31,6 @@ async function request(url,options={},type='json') {
   if(type==='blob') return response.blob();
   if(response.status===204) return {};
   return response.json();
-}
-function validateConfig(value) {
-  const next={clientId:String(value.clientId||'').trim(),ownerEmail:String(value.ownerEmail||'').trim().toLowerCase(),sheetId:String(value.sheetId||'').trim(),folderId:String(value.folderId||'').trim(),tabName:String(value.tabName||'물품').trim()};
-  if(!/^\S+\.apps\.googleusercontent\.com$/.test(next.clientId)) throw new Error('Google OAuth 웹 클라이언트 ID를 입력해 주세요.');
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(next.ownerEmail)) throw new Error('사용할 본인 Google 계정 이메일을 입력해 주세요.');
-  if(!/^[\w-]+$/.test(next.sheetId) || !/^[\w-]+$/.test(next.folderId)) throw new Error('시트 ID와 사진 폴더 ID를 입력해 주세요.');
-  if(!next.tabName) throw new Error('물품 탭 이름을 입력해 주세요.');
-  return next;
 }
 function prefix() { return `${config.ownerEmail.toLowerCase()}:${config.sheetId}:${config.folderId}:${config.tabName}:`; }
 function urls(photos) { return Object.fromEntries(Object.entries(photos).map(([id,blob])=>{ const url=URL.createObjectURL(blob); objectUrls.add(url); return [id,url]; })); }

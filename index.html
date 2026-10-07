@@ -17,6 +17,7 @@
   <dialog id="settings-dialog" class="modal settings-dialog" aria-labelledby="settings-title">
     <header class="modal-head"><h2 id="settings-title">Google 연결 설정</h2><button id="settings-close" class="icon-button" aria-label="닫기">×</button></header>
     <form id="settings-form" class="item-form">
+      <div id="setup-note" class="notice success" role="status" hidden><p>QR·연결 링크에서 설정을 모두 불러왔어요. 확인 후 바로 Google에 연결할 수 있습니다.</p><button id="quick-connect" type="button" class="primary">이 설정으로 Google 연결</button></div>
       <p class="hint">설정은 이 기기에만 저장됩니다. 기존 시트와 사진 폴더를 사용하며 파일을 공개하지 않습니다.</p>
       <label>Google OAuth 웹 클라이언트 ID<input name="clientId" placeholder="…apps.googleusercontent.com" autocomplete="off" required></label>
       <label>본인 Google 계정 이메일<input name="ownerEmail" type="email" placeholder="본인 계정 이메일" autocomplete="email" required></label>
@@ -25,6 +26,10 @@
       <label>물품 탭 이름<input name="tabName" value="물품" required></label>
       <p class="hint">기존 사진을 연결하기 위해 Drive 전체 접근 권한을 요청합니다. Sheets API와 Drive API를 Google Cloud에서 활성화해야 합니다. 토큰은 기기에 저장하지 않습니다.</p>
       <label class="config-upload">설정 파일 가져오기<input id="config-file" type="file" accept="application/json,.json"></label>
+      <div class="settings-tools"><button type="button" id="save-config-file" class="secondary">설정 파일 저장</button><button type="button" id="copy-setup-link" class="secondary">연결 링크 복사</button></div>
+      <p id="transfer-note" class="hint" role="status" hidden></p>
+      <textarea id="setup-link-text" aria-label="개인 연결 링크" readonly hidden></textarea>
+      <p class="hint">연결 링크·QR에는 이메일과 시트·폴더 ID가 들어 있습니다. 본인 기기에서만 사용하세요. 비밀번호·접근 토큰은 포함하지 않습니다.</p>
       <p id="settings-error" class="notice error" role="alert" hidden></p>
       <button type="submit" class="primary">설정 저장</button>
       <div class="settings-tools"><button type="button" id="demo" class="secondary">체험 모드</button><button type="button" id="offline" class="secondary">저장된 목록 보기</button><button type="button" id="disconnect" class="quiet-button">연결 해제</button><button type="button" id="clear-cache" class="quiet-button">기기 캐시 비우기</button></div>
