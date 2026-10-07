@@ -34,7 +34,13 @@ export function patchItem(item, patch, expected, now) {
   if (String(expected) !== item.updatedAt) throw new Error('다른 화면에서 수정됐어요. 새로고침 후 다시 시도해 주세요.');
   const status = patch.status === undefined ? item.status : patch.status;
   if (!STATUSES.includes(status)) throw new Error('올바르지 않은 상태예요.');
-  return {...item,name:patch.name === undefined ? item.name : text(patch.name,80) || '이름 없는 물품',price:patch.price === undefined ? item.price : price(patch.price),place:patch.place === undefined ? item.place : text(patch.place,100),description:patch.description === undefined ? item.description : text(patch.description,1000),status,updatedAt:now,listedAt:status === 'selling' && !item.listedAt ? now : item.listedAt};
+  let photoIds = item.photoIds;
+  if (patch.photoIds !== undefined) {
+    const ids = patch.photoIds;
+    if (!Array.isArray(ids) || ids.length !== photoIds.length || ids.some(id => typeof id !== 'string') || [...new Set(ids)].length !== ids.length || ids.some(id => !photoIds.includes(id))) throw new Error('이 물품에 등록된 사진 중에서 썸네일을 선택해 주세요.');
+    photoIds = [...ids];
+  }
+  return {...item,photoIds,name:patch.name === undefined ? item.name : text(patch.name,80) || '이름 없는 물품',price:patch.price === undefined ? item.price : price(patch.price),place:patch.place === undefined ? item.place : text(patch.place,100),description:patch.description === undefined ? item.description : text(patch.description,1000),status,updatedAt:now,listedAt:status === 'selling' && !item.listedAt ? now : item.listedAt};
 }
 export function photoBlob(data) {
   if (typeof data !== 'string' || data.length > 160000 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(data)) throw new Error('사진은 100KB 이하 JPEG여야 합니다.');
