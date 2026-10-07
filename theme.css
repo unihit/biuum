@@ -90,3 +90,5 @@ footer button[aria-pressed=true] { background: #fff0e5; color: #b54405; }
   .connection-inner p { font-size: 11px; }
   footer { margin-top: 16px; border-top: 0; }
 }
+
+.detail-photo-choice{min-width:0}.detail-photo-choice:only-child{grid-column:1/-1}.thumbnail-button,.photo-previews button.thumbnail-button{position:static;width:100%;height:auto;padding:8px 3px;margin-top:6px;border-radius:8px;font-size:12px;background:var(--soft);color:var(--green)}.thumbnail-button:disabled{opacity:1;background:var(--green);color:#fff}.detail-photo-choice .detail-photo{aspect-ratio:1}

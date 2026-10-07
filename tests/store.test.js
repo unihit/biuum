@@ -6,6 +6,21 @@ const config={ownerEmail:'owner@example.com',sheetId:'sheet',folderId:'folder',t
 function memory() {const data=new Map();return {data,get:async key=>structuredClone(data.get(key)),set:async(key,value)=>data.set(key,structuredClone(value)),delete:async key=>data.delete(key)};}
 const now='2026-10-07T00:00:00.000Z';
 const jpeg='data:image/jpeg;base64,'+Buffer.from([255,216,255,217]).toString('base64');
+test('thumbnail choice persists in Sheets without allowing foreign, removed or duplicate photos',async()=>{
+  const item=newItem({name:'썸네일 테스트'},'id',['first','second','third'],now);
+  const rows=[HEADERS,toRow(item)];let writes=0;
+  const store=new GoogleStore(config,async(url,options={})=>{
+    if(options.method==='PUT'){writes++;rows[1]=JSON.parse(options.body).values[0];return {};}
+    return {values:rows};
+  },memory());
+  const next=await store.updateItem(item.id,{photoIds:['second','first','third']},now);
+  assert.deepEqual(next.photoIds,['second','first','third']);
+  assert.deepEqual((await store.listItems())[0].photoIds,next.photoIds);
+  for(const ids of [['foreign','first','third'],['first'],['first','first','third']]){
+    await assert.rejects(()=>store.updateItem(item.id,{photoIds:ids},next.updatedAt),/썸네일/);
+  }
+  assert.equal(writes,1);
+});
 test('old escaped cells and dates roundtrip; blank rows retain actual sheet row numbers',()=>{
   const item=newItem({name:'=SUM(A1)',place:"'보관",description:'@메모',price:0},'a',['photo'],now);
   const rows=parseRows([HEADERS,[],toRow(item)]);assert.equal(rows[0].rowNumber,3);
