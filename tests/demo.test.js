@@ -1,0 +1,26 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {cache} from '../cache.js';
+test('demo loads persistent timestamps and permits status updates without touching Google',async()=>{
+  const values=new Map();
+  cache.get=async key=>structuredClone(values.get(key));
+  cache.set=async(key,value)=>values.set(key,structuredClone(value));
+  cache.delete=async key=>values.delete(key);
+  globalThis.window={addEventListener(){},dispatchEvent(){}};
+  globalThis.localStorage={getItem:()=>null,setItem(){}};
+  Object.defineProperty(globalThis,'navigator',{value:{onLine:false},configurable:true});
+  const originalInterval=globalThis.setInterval;
+  globalThis.setInterval=()=>0;
+  const {store}=await import('../store.js');
+  globalThis.setInterval=originalInterval;
+  await store.useDemo();
+  const first=await store.call('listItems');
+  assert.equal(values.has('demo'),true);
+  const second=await store.call('listItems');
+  assert.deepEqual(first,second);
+  const result=await store.call('updateItem',first[0].id,{status:'selling'},first[0].updatedAt);
+  assert.equal(result.status,'selling');
+  const updated=await store.call('listItems');
+  assert.equal(updated[0].status,'selling');
+  await assert.rejects(()=>store.call('updateItem',first[0].id,{status:'sold'},first[0].updatedAt),/다른 화면/);
+});

@@ -90,7 +90,9 @@ export const store={
     const scopes=['https://www.googleapis.com/auth/drive','https://www.googleapis.com/auth/userinfo.email'];
     // Existing Apps Script files require access beyond drive.file unless individually granted.
     const response=await new Promise((resolve,reject)=>{
-      const client=oauth.initTokenClient({client_id:config.clientId,scope:scopes.join(' '),callback:value=>value.error?reject(new Error('Google 연결을 완료하지 못했습니다.')):resolve(value),error_callback:()=>reject(new Error('Google 연결 창이 닫혔습니다.'))});
+      const timer=setTimeout(()=>reject(new Error('Google 연결 응답을 받지 못했습니다. 팝업 차단을 확인하고 Chrome·Edge·Safari에서 다시 연결해 주세요.')),120000);
+      const complete=value=>{clearTimeout(timer);value.error?reject(new Error('Google 연결을 완료하지 못했습니다.')):resolve(value);};
+      const client=oauth.initTokenClient({client_id:config.clientId,scope:scopes.join(' '),callback:complete,error_callback:()=>{clearTimeout(timer);reject(new Error('Google 연결 창이 닫혔거나 차단됐습니다. 일반 브라우저에서 다시 연결해 주세요.'));}});
       client.requestAccessToken({prompt:'select_account',login_hint:config.ownerEmail});
     });
     if(!oauth.hasGrantedAllScopes(response,...scopes)) throw new Error('파일 저장 및 계정 확인 권한을 모두 승인해야 연결할 수 있습니다.');
