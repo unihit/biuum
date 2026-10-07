@@ -1,4 +1,5 @@
 import {store} from './store.js';
+import {decodeSetup,setupUrl,validateSettings} from './setup-link.js';
 const $=id=>document.getElementById(id),dialog=$('settings-dialog'),form=$('settings-form');
 let installing;
 const messages={locked:['Google 연결 전','Google 연결 후 목록을 불러옵니다.'],google:['Google에 연결됨','목록은 Sheets에, 사진은 비공개 Drive에 저장됩니다.'],offline:['저장된 목록 보기 · 조회 전용','이 기기의 목록과 이전에 읽은 사진만 표시됩니다. 수정하려면 Google에 연결하세요.'],demo:['체험 모드 · 기기에만 저장','예시 데이터입니다. Google의 물품 목록에는 영향을 주지 않습니다.']};
@@ -29,6 +30,41 @@ $('config-file').addEventListener('change',async event=>{
   const file=event.target.files[0]; if(!file)return;
   try {if(file.size>20000)throw new Error('설정 파일이 너무 큽니다.');const value=JSON.parse(await file.text());populate({...store.status.config,...value});}catch{message('설정 JSON 파일을 확인해 주세요.','settings-error');}finally{event.target.value='';}
 });
+function consumeSetupLink() {
+  if(!location.hash.startsWith('#setup='))return;
+  const fragment=location.hash;
+  // The fragment is never sent in HTTP requests. Remove it before showing settings.
+  history.replaceState(null,'',location.pathname+location.search);
+  try {
+    if(store.status.busy)throw new Error('Google 연결이나 저장이 끝난 뒤 설정 링크를 다시 열어 주세요.');
+    const settings=decodeSetup(fragment);populate(settings);
+    $('setup-note').hidden=false;
+    $('settings-error').hidden=true;
+    if(!dialog.open)dialog.showModal();
+  }catch(error){message(error);}
+}
+$('settings-open').addEventListener('click',()=>{$('setup-note').hidden=true;});
+$('save-config-file').addEventListener('click',()=>{
+  try {
+    const settings=validateSettings(Object.fromEntries(new FormData(form)));
+    const url=URL.createObjectURL(new Blob([JSON.stringify(settings,null,2)],{type:'application/json'}));
+    const anchor=document.createElement('a');anchor.href=url;anchor.download='biuum-connection.local.json';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  }catch(error){message(error,'settings-error');}
+});
+$('copy-setup-link').addEventListener('click',async()=>{
+  try {
+    const link=setupUrl(Object.fromEntries(new FormData(form)),location.href);
+    try{await navigator.clipboard.writeText(link);$('transfer-note').textContent='개인 연결 링크를 복사했습니다. 다른 기기에서 열면 입력 없이 설정을 불러옵니다.';}
+    catch{$('setup-link-text').value=link;$('setup-link-text').hidden=false;$('setup-link-text').select();$('transfer-note').textContent='아래 연결 링크를 길게 눌러 복사해 주세요.';}
+    $('transfer-note').hidden=false;
+  }catch(error){message(error,'settings-error');}
+});
+window.addEventListener('hashchange',consumeSetupLink);
+$('quick-connect').addEventListener('click',()=>action(async()=>{
+  await store.saveConfig(Object.fromEntries(new FormData(form)));
+  dialog.close();
+  await store.connect();
+}));
 $('demo').addEventListener('click',()=>action(()=>store.useDemo(),true));
 $('offline').addEventListener('click',()=>action(()=>store.useOffline(),true));
 $('disconnect').addEventListener('click',()=>action(()=>store.disconnect(),true));
@@ -39,3 +75,4 @@ $('install').addEventListener('click',async()=>{if(!installing)return;await inst
 window.addEventListener('appinstalled',()=>{$('install').hidden=true;});
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>message('기기에서 앱 캐시를 등록하지 못했습니다. 온라인 기능은 계속 사용할 수 있습니다.'));
 update();
+consumeSetupLink();
