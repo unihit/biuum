@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#ff6f0f"><meta name="description" content="나의 중고물품 목록과 사진을 비공개 Google 저장소에 보관합니다.">
+  <meta name="referrer" content="strict-origin-when-cross-origin"><meta name="apple-mobile-web-app-capable" content="yes">
+  <title>비움 · 중고물품 보관함</title>
+  <link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="stylesheet" href="./styles.css"><link rel="stylesheet" href="./connection.css"><link rel="stylesheet" href="./theme.css">
+</head>
+<body>
+  <section class="connection-bar" aria-label="저장소 연결">
+    <div class="connection-inner"><div><span class="connection-dot" id="connection-dot"></span><strong id="connection-title">Google 연결 전</strong><p id="connection-description">설정을 입력하고 본인 Google 계정에 연결하세요.</p></div><div class="connection-actions"><button id="connect" class="primary">Google 연결</button><button id="settings-open" class="secondary">연결 설정</button><button id="install" class="secondary" hidden>앱 설치</button></div></div>
+    <p id="connection-message" class="connection-message" role="status" hidden></p>
+  </section>
+  <div id="root"></div>
+  <dialog id="settings-dialog" class="modal settings-dialog" aria-labelledby="settings-title">
+    <header class="modal-head"><h2 id="settings-title">Google 연결 설정</h2><button id="settings-close" class="icon-button" aria-label="닫기">×</button></header>
+    <form id="settings-form" class="item-form">
+      <p class="hint">설정은 이 기기에만 저장됩니다. 기존 시트와 사진 폴더를 사용하며 파일을 공개하지 않습니다.</p>
+      <label>Google OAuth 웹 클라이언트 ID<input name="clientId" placeholder="…apps.googleusercontent.com" autocomplete="off" required></label>
+      <label>본인 Google 계정 이메일<input name="ownerEmail" type="email" placeholder="본인 계정 이메일" autocomplete="email" required></label>
+      <label>기존 시트 ID<input name="sheetId" autocomplete="off" required></label>
+      <label>사진 폴더 ID<input name="folderId" autocomplete="off" required></label>
+      <label>물품 탭 이름<input name="tabName" value="물품" required></label>
+      <p class="hint">기존 사진을 연결하기 위해 Drive 전체 접근 권한을 요청합니다. Sheets API와 Drive API를 Google Cloud에서 활성화해야 합니다. 토큰은 기기에 저장하지 않습니다.</p>
+      <label class="config-upload">설정 파일 가져오기<input id="config-file" type="file" accept="application/json,.json"></label>
+      <p id="settings-error" class="notice error" role="alert" hidden></p>
+      <button type="submit" class="primary">설정 저장</button>
+      <div class="settings-tools"><button type="button" id="demo" class="secondary">체험 모드</button><button type="button" id="offline" class="secondary">저장된 목록 보기</button><button type="button" id="disconnect" class="quiet-button">연결 해제</button><button type="button" id="clear-cache" class="quiet-button">기기 캐시 비우기</button></div>
+      <p class="hint">체험 데이터는 Google에 저장되지 않습니다. 기기 캐시를 비워도 Google의 물품과 사진은 유지됩니다. iPhone에서는 Safari 공유 메뉴의 ‘홈 화면에 추가’를 사용하세요.</p>
+    </form>
+  </dialog>
+  <noscript>비움을 사용하려면 JavaScript를 켜 주세요.</noscript>
+  <script type="module" src="./connection.js"></script><script type="module" src="./app.js"></script>
+</body></html>
+
