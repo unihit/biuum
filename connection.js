@@ -6,18 +6,26 @@ let installing;
 const messages={locked:['Google 연결 전','Google 연결 후 목록을 불러옵니다.'],google:['Google에 연결됨','목록은 Sheets에, 사진은 비공개 Drive에 저장됩니다.'],offline:['저장된 목록 보기 · 조회 전용','이 기기의 목록과 이전에 읽은 사진만 표시됩니다. 수정하려면 Google에 연결하세요.'],demo:['체험 모드 · 기기에만 저장','예시 데이터입니다. Google의 물품 목록에는 영향을 주지 않습니다.']};
 function update() {
   const s=store.status,[title,description]=messages[s.mode];
-  $('connection-title').textContent=s.mode==='google'&&!s.connected?'Google 재연결 필요':title;
-  $('connection-description').textContent=(s.account?s.account+' · ':'')+(!navigator.onLine && s.mode==='google'?'인터넷 연결이 끊겼습니다. 저장된 목록 보기로 전환할 수 있습니다.':description);
+  const roleName=s.role==='writer'?'등록 기기':'조회 전용';
+  $('connection-title').textContent=s.mode==='google'&&!s.connected?'Google 재연결 필요':s.mode==='google'&&s.connected?`Google에 연결됨 · ${roleName}`:title;
+  const detail=s.mode==='google'&&s.connected&&s.role==='reader'?'등록 기기에서 바꾼 목록을 30초마다 새로 가져옵니다. 이 기기에서는 수정할 수 없어요.':description;
+  $('connection-description').textContent=(s.account?s.account+' · ':'')+(!navigator.onLine && s.mode==='google'?'인터넷 연결이 끊겼습니다. 저장된 목록 보기로 전환할 수 있습니다.':detail);
   $('connection-dot').classList.toggle('connected',s.connected);
-  $('connect').textContent=s.connected?'Google 다시 연결':'Google 연결';
+  const box=$('connection-message');
+  if(s.notice){box.textContent=s.notice;box.hidden=false;box.dataset.source='store';}
+  else if(box.dataset.source==='store'){box.hidden=true;box.textContent='';delete box.dataset.source;}
+  document.body.classList.toggle('google-reader',s.mode==='google'&&s.role==='reader');
+  $('connect').textContent=s.mode==='google'?'Google 다시 연결':'Google 연결';
   $('connect').disabled=s.busy||!navigator.onLine;$('settings-open').disabled=s.busy;
   $('show-qr').disabled=s.busy;
   form.querySelectorAll('button,input').forEach(element=>element.disabled=s.busy);
+  $('device-role').checked=s.role==='writer';
+  $('role-note').textContent=s.role==='writer'?'이 기기에서 물품을 추가·수정합니다. 다른 기기를 등록 기기로 바꾸면 이 기기는 조회 전용으로 전환됩니다.':'등록 기기에서 바꾼 목록을 30초마다 새로 가져옵니다. 이 기기에서는 물품을 추가·수정할 수 없습니다.';
 }
-function message(error,target='connection-message') {const element=$(target);element.textContent=error instanceof Error?error.message:String(error);element.hidden=false;}
+function message(error,target='connection-message') {const element=$(target);element.textContent=error instanceof Error?error.message:String(error);element.hidden=false;element.dataset.source='ui';}
 function populate(value=store.status.config) { for(const key of ['clientId','ownerEmail','sheetId','folderId','tabName']) form.elements.namedItem(key).value=value[key] || (key==='tabName'?'물품':''); }
 async function action(fn,close=false) {
-  $('settings-error').hidden=true;$('connection-message').hidden=true;
+  $('settings-error').hidden=true;const box=$('connection-message');box.hidden=true;delete box.dataset.source;
   try {await fn();if(close)dialog.close();}catch(error){message(error,dialog.open?'settings-error':'connection-message');}finally{update();}
 }
 $('settings-open').addEventListener('click',()=>{populate();$('settings-error').hidden=true;dialog.showModal();});
@@ -87,6 +95,14 @@ $('demo').addEventListener('click',()=>action(()=>store.useDemo(),true));
 $('offline').addEventListener('click',()=>action(()=>store.useOffline(),true));
 $('disconnect').addEventListener('click',()=>action(()=>store.disconnect(),true));
 $('clear-cache').addEventListener('click',()=>action(()=>store.clearCache(),true));
+$('device-role').addEventListener('change',async event=>{
+  const input=event.target;
+  if(!input.checked) return action(()=>store.setRole('reader'));
+  let other=null;
+  try{other=await store.writerInfo();}catch{}
+  if(other && !confirm(`이미 '${other.writerName||'다른 기기'}'가 등록 기기예요.\n\n이 기기를 등록 기기로 바꾸면 그 기기는 조회 전용이 됩니다. 계속할까요?`)){input.checked=false;return;}
+  await action(()=>store.setRole('writer',{takeover:Boolean(other)}));
+});
 window.addEventListener('biuum-status',update);
 window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installing=event;$('install').hidden=false;});
 $('install').addEventListener('click',async()=>{if(!installing)return;await installing.prompt();installing=null;$('install').hidden=true;});
